@@ -1,0 +1,82 @@
+Index: Drivers/ccid/src/ccid_usb.c
+===================================================================
+--- Drivers/ccid/src/ccid_usb.c	(revision 6746)
++++ Drivers/ccid/src/ccid_usb.c	(working copy)
+@@ -109,6 +109,12 @@
+ 	/* pointer to the multislot extension (if any) */
+ 	struct usbDevice_MultiSlot_Extension *multislot_extension;
+ 
++	int last_write_size;
++	/* bit mask for workarounds */
++	int workarounds;
++	/* workaround bitmask definition(s) */
++#define LONG_PDU_BREAKS_SEQUENCE 1
++
+ } _usbDevice;
+ 
+ /* The _usbDevice structure must be defined before including ccid_usb.h */
+@@ -124,6 +130,7 @@
+ static int get_end_points(struct libusb_config_descriptor *desc,
+ 	_usbDevice *usbdevice, int num);
+ int ccid_check_firmware(struct libusb_device_descriptor *desc);
++int ccid_workarounds(struct libusb_device_descriptor *desc);
+ static unsigned int *get_data_rates(unsigned int reader_index,
+ 	struct libusb_config_descriptor *desc, int num);
+ 
+@@ -585,6 +592,9 @@
+ 					goto end2;
+ 				}
+ 
++				usbDevice[reader_index].workarounds |=
++					ccid_workarounds(&desc);
++
+ #ifdef USE_COMPOSITE_AS_MULTISLOT
+ 				/* use the next interface for the next "slot" */
+ 				static_interface++;
+@@ -737,6 +747,8 @@
+ 		return STATUS_UNSUCCESSFUL;
+ 	}
+ 
++	usbDevice[reader_index].last_write_size = length;
++
+ 	return STATUS_SUCCESS;
+ } /* WriteUSB */
+ 
+@@ -784,6 +796,13 @@
+ 	if ((*length >= BSEQ_OFFSET)
+ 		&& (buffer[BSEQ_OFFSET] < *ccid_descriptor->pbSeq -1))
+ 	{
++		/* Workaround for ACR122U reader */
++		if ((usbDevice[reader_index].workarounds &
++					LONG_PDU_BREAKS_SEQUENCE) &&
++		    (usbDevice[reader_index].last_write_size > 64) &&
++		    (buffer[BSEQ_OFFSET] == *ccid_descriptor->pbSeq -2))
++			return STATUS_SUCCESS;
++
+ 		duplicate_frame++;
+ 		if (duplicate_frame > 10)
+ 		{
+@@ -1047,6 +1066,23 @@
+ 
+ /*****************************************************************************
+  *
++ *					ccid_workarounds
++ *
++ ****************************************************************************/
++int ccid_workarounds(struct libusb_device_descriptor *desc)
++{
++	/* Advanced Card Systems, Ltd ACR122U. If you send a CCID  */
++	/* frame longer than 64 bytes (APDU longer than 54 bytes), */
++	/* the response frame has sequence byte one less than      */
++	/* the request frame.                                      */
++	if (desc->idVendor == 0x072f && desc->idProduct == 0x2200)
++		return LONG_PDU_BREAKS_SEQUENCE;
++	return 0;
++} /* ccid_workarounds */
++
++
++/*****************************************************************************
++ *
+  *					get_data_rates
+  *
+  ****************************************************************************/

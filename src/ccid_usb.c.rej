@@ -1,0 +1,23 @@
+--- src/ccid_usb.c	(revision 6746)
++++ src/ccid_usb.c	(working copy)
+@@ -109,6 +109,12 @@
+ 	/* pointer to the multislot extension (if any) */
+ 	struct usbDevice_MultiSlot_Extension *multislot_extension;
+ 
++	int last_write_size;
++	/* bit mask for workarounds */
++	int workarounds;
++	/* workaround bitmask definition(s) */
++#define LONG_PDU_BREAKS_SEQUENCE 1
++
+ } _usbDevice;
+ 
+ /* The _usbDevice structure must be defined before including ccid_usb.h */
+@@ -124,6 +130,7 @@
+ static int get_end_points(struct libusb_config_descriptor *desc,
+ 	_usbDevice *usbdevice, int num);
+ int ccid_check_firmware(struct libusb_device_descriptor *desc);
++int ccid_workarounds(struct libusb_device_descriptor *desc);
+ static unsigned int *get_data_rates(unsigned int reader_index,
+ 	struct libusb_config_descriptor *desc, int num);
+ 
