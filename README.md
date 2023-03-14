@@ -1,6 +1,29 @@
 USB CCID IFD Handler
 ====================
 
+# NOTE
+
+This is a hacked version of the CCID library that has changes that may break
+some readers.  It is not forked on purpose and do not send a PR to the original
+maintainer.
+
+Changes are:
+
+1) addition of configuration call to detact competing drivers (USB services will claim the device otherwise)
+2) Addition of a modified patch to work around firmware issues (http://www.average.org/pcsclite-ACR122U/pcsclite-ccid-ACR122U.diff)
+
+To set up:
+
+1) checkout this repo (main branch)
+2) sudo apt-get install build-essential flex libusb-1* python3-pip swig libpcsclite-dev libpcsclite1 libusb-dev
+3) run ./bootstrap
+4) run ./configure (errors are problems with these instructions, PR fixes back)
+5) sudo make install
+6) sudo apt-get install pcscd pcscd-tools
+7) run `pcscd -d -f ` and ensure the device inits correctly - from another terminal, run `pcsc_scan`.  it should pause and read an NFC card
+8) `systemctl enable pcscd` and `systemctl start pcscd`
+
+
 This package provides the source code for a generic USB CCID (Chip/Smart
 Card Interface Devices) and ICCD (Integrated Circuit(s) Card Devices)
 driver. See the USB CCID [1] and ICCD [2] specifications from the USB
