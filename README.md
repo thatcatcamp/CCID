@@ -3,14 +3,17 @@ USB CCID IFD Handler
 
 # NOTE
 
-This is a hacked version of the CCID library that has changes that may break
+This is a hacked version of the CCID library that has changes that *WILL* break
 some readers.  It is not forked on purpose and do not send a PR to the original
 maintainer.
 
+This is only tested with the ACS ACR122U NFC Reader - which is officially 'unsupported' by CCID.  It is reported online that this
+device works in stock Windows.
+
 Changes are:
 
-1) addition of configuration call to detact competing drivers (USB services will claim the device otherwise)
-2) Addition of a modified patch to work around firmware issues (http://www.average.org/pcsclite-ACR122U/pcsclite-ccid-ACR122U.diff)
+1) addition of configuration call to detach competing drivers (USB services will claim the device otherwise)
+2) Addition of a modified patch to work around firmware issues where the sequence of packets is incorrect (http://www.average.org/pcsclite-ACR122U/pcsclite-ccid-ACR122U.diff)
 
 To set up:
 
